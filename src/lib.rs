@@ -139,6 +139,7 @@ mod joints;
 mod rctree;
 mod rctree_links;
 mod vec_links;
+mod idtree;
 
 pub mod math;
 pub mod urdf;
@@ -150,3 +151,4 @@ pub use self::links::*;
 pub use self::ik::*;
 pub use self::rctree_links::*;
 pub use self::vec_links::*;
+pub use self::idtree::*;
