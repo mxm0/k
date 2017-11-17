@@ -9,7 +9,7 @@ mod tests {
     use k::KinematicChain;
     use k::JointContainer;
 
-    pub fn create_joint_with_link_array6(name: &str) -> k::VecKinematicChain<f32> {
+    pub fn create_joint_with_link_array6() -> Vec<k::Link<f32>> {
         let l0 = k::LinkBuilder::new()
             .name("shoulder_link1")
             .joint(
@@ -63,11 +63,11 @@ mod tests {
             )
             .translation(Translation3::new(0.0, 0.0, -0.15))
             .finalize();
-        k::VecKinematicChain::new(name, vec![l0, l1, l2, l3, l4, l5])
+        vec![l0, l1, l2, l3, l4, l5]
     }
 
 
-    pub fn create_joint_with_link_array7(name: &str) -> k::VecKinematicChain<f32> {
+    pub fn create_joint_with_link_array7() -> Vec<k::Link<f32>> {
         let l0 = k::LinkBuilder::new()
             .name("shoulder_link1")
             .joint(
@@ -130,12 +130,19 @@ mod tests {
             )
             .translation(Translation3::new(0.0, 0.0, -0.10))
             .finalize();
-        k::VecKinematicChain::new(name, vec![l0, l1, l2, l3, l4, l5, l6])
+        vec![l0, l1, l2, l3, l4, l5, l6]
     }
 
     #[test]
     pub fn ik_fk7() {
-        let mut arm = create_joint_with_link_array7("arm7");
+        let links = create_joint_with_link_array7();
+        let mut tree = k::IdTree::new();
+        let id_list = links
+            .into_iter()
+            .map(|link| tree.create_node(link))
+            .collect::<Vec<_>>();
+        let mut arm = k::IdKinematicChain::new("arm7", &mut tree, &id_list);
+
         let angles = vec![0.8, 0.2, 0.0, -1.5, 0.0, -0.3, 0.0];
         arm.set_joint_angles(&angles).unwrap();
         let init_pose = arm.calc_end_transform();
@@ -149,7 +156,14 @@ mod tests {
 
     #[test]
     pub fn ik_fk6() {
-        let mut arm = create_joint_with_link_array6("arm6");
+        let links = create_joint_with_link_array6();
+        let mut tree = k::IdTree::new();
+        let id_list = links
+            .into_iter()
+            .map(|link| tree.create_node(link))
+            .collect::<Vec<_>>();
+        let mut arm = k::IdKinematicChain::new("arm6", &mut tree, &id_list);
+
         let angles = vec![0.8, 0.2, 0.0, -1.2, 0.0, 0.1];
         arm.set_joint_angles(&angles).unwrap();
         let init_pose = arm.calc_end_transform();

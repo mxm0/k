@@ -50,7 +50,6 @@ use std::path::Path;
 use na::Real;
 
 use links::*;
-use vec_links::*;
 use rctree::*;
 use rctree_links::*;
 use joints::*;
@@ -125,19 +124,6 @@ where
         .finalize()
 }
 
-fn get_joint_until_root<'a, 'b>(
-    end_name: &'a str,
-    parent_joint_map: &'b HashMap<&str, &urdf_rs::Joint>,
-) -> Vec<&'b urdf_rs::Joint> {
-    let mut ret = Vec::new();
-    let mut parent_link_name = end_name;
-    while let Some(joint) = parent_joint_map.get(&parent_link_name) {
-        ret.push(*joint);
-        parent_link_name = &joint.parent.link;
-    }
-    ret.reverse();
-    ret
-}
 
 fn get_root_link_name(robot: &urdf_rs::Robot) -> String {
     let mut child_joint_map = HashMap::<&str, &urdf_rs::Joint>::new();
@@ -151,46 +137,6 @@ fn get_root_link_name(robot: &urdf_rs::Robot) -> String {
         parent_link_name = &joint.parent.link;
     }
     parent_link_name.to_string()
-}
-
-/// Create `LinkStar` from `urdf_rs::Robot`
-pub fn create_star<T>(robot: &urdf_rs::Robot) -> LinkStar<T>
-where
-    T: Real,
-{
-    // find end links
-    let mut link_map = HashMap::new();
-    for l in &robot.links {
-        if let Some(old) = link_map.insert(&l.name, l) {
-            warn!("old {:?} found", old);
-        }
-    }
-    let mut child_joint_map = HashMap::<&str, &urdf_rs::Joint>::new();
-    for j in &robot.joints {
-        if let Some(old) = child_joint_map.insert(&j.child.link, j) {
-            warn!("old {:?} found", old);
-        }
-    }
-
-    for joint in &robot.joints {
-        link_map.remove(&joint.parent.link);
-    }
-    // link_map contains end links only here
-    LinkStar::new(
-        &robot.name,
-        link_map
-            .keys()
-            .map(|end_name| {
-                get_joint_until_root(end_name, &child_joint_map)
-                    .iter()
-                    .map(|urdf_joint| {
-                        create_joint_with_link_from_urdf_joint(urdf_joint)
-                    })
-                    .collect()
-            })
-            .map(|link_vec| VecKinematicChain::new("", link_vec))
-            .collect(),
-    )
 }
 
 /// Create `LinkTree` from `urdf_rs::Robot`
@@ -264,16 +210,6 @@ where
     }
 }
 
-impl<T> FromUrdf for LinkStar<T>
-where
-    T: Real,
-{
-    fn from(robot: &urdf_rs::Robot) -> Self {
-        create_star(robot)
-    }
-}
-
-
 /// Create `LinkTree` from URDF file
 ///
 /// # Examples
@@ -290,44 +226,6 @@ where
     Ok(create_tree(&urdf_rs::read_file(path)?))
 }
 
-
-/// Create `LinkStar` from URDF file
-///
-/// # Examples
-///
-/// ```
-/// let rf = k::urdf::create_star_from_file::<f64, _>("urdf/sample.urdf").unwrap();
-/// assert_eq!(rf.frames.len(), 2);
-/// assert_eq!(rf.frames[0].len(), 6);
-/// assert_eq!(rf.frames[1].len(), 6);
-/// ```
-pub fn create_star_from_file<T, P>(path: P) -> Result<LinkStar<T>, urdf_rs::UrdfError>
-where
-    T: Real,
-    P: AsRef<Path>,
-{
-    Ok(create_star(&urdf_rs::read_file(path)?))
-}
-
-#[test]
-fn test_star() {
-    let robo = urdf_rs::read_file("urdf/sample.urdf").unwrap();
-    assert_eq!(robo.name, "robo");
-    assert_eq!(robo.links.len(), 1 + 6 + 6);
-
-    let rf = create_star::<f32>(&robo);
-    assert_eq!(rf.frames.len(), 2);
-    assert_eq!(rf.frames[0].len(), 6);
-    assert_eq!(rf.frames[1].len(), 6);
-}
-
-#[test]
-fn test_star_from_file() {
-    let rf: LinkStar<f32> = create_star_from_file("urdf/sample.urdf").unwrap();
-    assert_eq!(rf.frames.len(), 2);
-    assert_eq!(rf.frames[0].len(), 6);
-    assert_eq!(rf.frames[1].len(), 6);
-}
 
 #[test]
 fn test_tree() {
