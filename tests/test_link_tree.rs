@@ -4,11 +4,12 @@ extern crate k;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use k::urdf::FromUrdf;
     use k::JointContainer;
 
     #[test]
     pub fn test_tree() {
-        let tree = k::urdf::create_tree_from_file::<f32, _>("urdf/sample.urdf").unwrap();
+        let tree = k::RcLinkTree::<f32>::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
         assert_eq!(tree.dof(), 12);
         let all_names = tree.get_all_joint_names();
         assert!(all_names.len() == 13);

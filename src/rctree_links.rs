@@ -16,7 +16,6 @@
 extern crate nalgebra as na;
 
 use na::{Isometry3, Real};
-use std::collections::HashSet;
 use std::slice::{Iter, IterMut};
 use std::rc::Rc;
 use std::cell::{Ref, RefCell, RefMut};
@@ -312,14 +311,6 @@ where
     }
 }
 
-/// Create `Vec<RcKinematicChain>` from `RcLinkTree` to use IK
-pub fn create_kinematic_chains<T>(tree: &RcLinkTree<T>) -> Vec<RcKinematicChain<T>>
-where
-    T: Real,
-{
-    create_kinematic_chains_with_dof_limit(tree, usize::max_value())
-}
-
 impl<'a, T> CreateChain<'a, RcKinematicChain<T>, T> for RcLinkTree<T>
 where
     T: Real,
@@ -333,70 +324,6 @@ where
             None => None,
         }
     }
-}
-
-/// Create `Vec<RcKinematicChain>` from `RcLinkTree` to use IK
-pub fn create_kinematic_chains_with_dof_limit<T>(
-    tree: &RcLinkTree<T>,
-    dof_limit: usize,
-) -> Vec<RcKinematicChain<T>>
-where
-    T: Real,
-{
-    let mut name_hash = HashSet::new();
-    tree.iter()
-        .filter_map(|ljn_ref| if ljn_ref.borrow().children.is_empty() {
-            Some(ljn_ref.clone())
-        } else {
-            None
-        })
-        .filter_map(|ljn_ref| {
-            let dof = map_ancestors(&ljn_ref, &|ljn_ref| ljn_ref.clone())
-                .iter()
-                .filter(|ljn_ref| ljn_ref.borrow().data.has_joint_angle())
-                .count();
-            let mut root = ljn_ref.clone();
-            // use only movable joint as end effector
-            while !root.borrow().data.has_joint_angle() {
-                match get_parent_rc(&root) {
-                    Some(p) => {
-                        root = p;
-                    }
-                    None => {
-                        break;
-                    }
-                }
-            }
-            if dof > dof_limit {
-                let mut remove_dof = dof - dof_limit;
-                while remove_dof > 0 {
-                    match get_parent_rc(&root) {
-                        Some(parent_rc) => {
-                            root = parent_rc;
-                            if root.borrow().data.has_joint_angle() {
-                                remove_dof -= 1;
-                            }
-                        }
-                        None => {
-                            break;
-                        }
-                    }
-                }
-            }
-            if !name_hash.contains(&root.borrow().data.name) {
-                let kc = RcKinematicChain::new(&root.borrow().data.name, &root);
-                name_hash.insert(root.borrow().data.name.clone());
-                assert!(kc.get_joint_angles().len() <= dof_limit);
-                if kc.get_joint_angles().len() >= 6 {
-                    Some(kc)
-                } else {
-                    None
-                }
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
 }
 
 #[test]

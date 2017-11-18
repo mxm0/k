@@ -266,31 +266,21 @@ where
         &'a mut self,
         end_link_name: &str,
     ) -> Option<IdKinematicChain<'a, T>> {
-        let ids;
-        {
-            let end_node_opt = self.tree.iter().find(
-                |node| node.data.name == end_link_name,
-            );
-            ids = match end_node_opt {
-                Some(end_node) => {
-                    let mut node_ids = self.tree
-                        .iter_ancestors(&end_node.id)
-                        .map(|node| node.id)
-                        .collect::<Vec<_>>();
-                    node_ids.reverse();
-                    Some(node_ids)
-                }
-                None => None,
-            };
-        }
-        match ids {
-            Some(ids) => Some(IdKinematicChain::<'a, T>::new(
-                end_link_name,
-                &mut self.tree,
-                &ids,
-            )),
-            None => None,
-        }
+        self.tree
+            .iter()
+            .find(|node| node.data.name == end_link_name)
+            .map(|node| node.id.clone())
+            .map(|end_node_id| {
+                let mut node_ids = self.tree
+                    .iter_ancestors(&end_node_id)
+                    .map(|node| node.id)
+                    .collect::<Vec<_>>();
+                node_ids.reverse();
+                node_ids
+            })
+            .map(move |ids| {
+                IdKinematicChain::<'a, T>::new(end_link_name, &mut self.tree, &ids)
+            })
     }
 }
 
