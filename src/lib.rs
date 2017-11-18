@@ -46,3 +46,5 @@ pub use self::ik::*;
 pub use self::rctree_links::*;
 pub use self::idtree::*;
 pub use self::idtree_links::*;
+
+pub type LinkTree<T> = IdLinkTree<T>;

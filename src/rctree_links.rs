@@ -185,20 +185,20 @@ impl<'a, T: 'a> Iterator for NodeIterMut<'a, T> {
 }
 
 /// Kinematic Tree using `Rc<RefCell<Link<T>>>`
-pub struct LinkTree<T: Real> {
+pub struct RcLinkTree<T: Real> {
     pub name: String,
     pub root_link: RcLinkNode<T>,
     expanded_robot_link_vec: Vec<RcLinkNode<T>>,
 }
 
-impl<T: Real> LinkTree<T> {
-    /// Create LinkTree from root link
+impl<T: Real> RcLinkTree<T> {
+    /// Create RcLinkTree from root link
     ///
     /// # Arguments
     ///
     /// * `root_link` - root node of the links
     pub fn new(name: &str, root_link: RcLinkNode<T>) -> Self {
-        LinkTree {
+        RcLinkTree {
             name: name.to_string(),
             expanded_robot_link_vec: map_descendants(&root_link, &|ln| ln.clone()),
             root_link: root_link,
@@ -244,7 +244,7 @@ impl<T: Real> LinkTree<T> {
 }
 
 
-impl<T> JointContainer<T> for LinkTree<T>
+impl<T> JointContainer<T> for RcLinkTree<T>
 where
     T: Real,
 {
@@ -282,7 +282,7 @@ where
     }
 }
 
-impl<T> LinkContainer<T> for LinkTree<T>
+impl<T> LinkContainer<T> for RcLinkTree<T>
 where
     T: Real,
 {
@@ -312,42 +312,32 @@ where
     }
 }
 
-/// Create `Vec<RcKinematicChain>` from `LinkTree` to use IK
-pub fn create_kinematic_chains<T>(tree: &LinkTree<T>) -> Vec<RcKinematicChain<T>>
+/// Create `Vec<RcKinematicChain>` from `RcLinkTree` to use IK
+pub fn create_kinematic_chains<T>(tree: &RcLinkTree<T>) -> Vec<RcKinematicChain<T>>
 where
     T: Real,
 {
     create_kinematic_chains_with_dof_limit(tree, usize::max_value())
 }
 
-impl<'a, T> CreateChain<'a, RcKinematicChain<T>, T> for LinkTree<T>
+impl<'a, T> CreateChain<'a, RcKinematicChain<T>, T> for RcLinkTree<T>
 where
     T: Real,
 {
+    /// Create RcKinematicChain from `RcLinkTree` and the name of the end link
     fn chain_from_end_link_name(&'a mut self, name: &str) -> Option<RcKinematicChain<T>> {
-        create_kinematic_chain_from_end_link_name(self, name)
+        match self.iter().find(
+            |&ljn_ref| ljn_ref.borrow().data.name == name,
+        ) {
+            Some(ljn) => Some(RcKinematicChain::new(name, ljn)),
+            None => None,
+        }
     }
 }
 
-/// Create RcKinematicChain from `LinkTree` and the name of the end link
-pub fn create_kinematic_chain_from_end_link_name<T>(
-    tree: &LinkTree<T>,
-    end_link_name: &str,
-) -> Option<RcKinematicChain<T>>
-where
-    T: Real,
-{
-    match tree.iter().find(|&ljn_ref| {
-        ljn_ref.borrow().data.name == end_link_name
-    }) {
-        Some(ljn) => Some(RcKinematicChain::new(end_link_name, ljn)),
-        None => None,
-    }
-}
-
-/// Create `Vec<RcKinematicChain>` from `LinkTree` to use IK
+/// Create `Vec<RcKinematicChain>` from `RcLinkTree` to use IK
 pub fn create_kinematic_chains_with_dof_limit<T>(
-    tree: &LinkTree<T>,
+    tree: &RcLinkTree<T>,
     dof_limit: usize,
 ) -> Vec<RcKinematicChain<T>>
 where
@@ -520,12 +510,12 @@ fn it_works() {
     assert!(arm.get_end_link_name().clone().unwrap() == "link2");
     assert!(real_end != arm.calc_end_transform());
 
-    let tree = LinkTree::new("robo1", ljn0);
+    let mut tree = RcLinkTree::new("robo1", ljn0);
     assert_eq!(tree.dof(), 6);
 
-    let none_chain = create_kinematic_chain_from_end_link_name(&tree, "link_nono");
+    let none_chain = tree.chain_from_end_link_name("link_nono");
     assert!(none_chain.is_none());
-    let some_chain = create_kinematic_chain_from_end_link_name(&tree, "link3");
+    let some_chain = tree.chain_from_end_link_name("link3");
     assert!(some_chain.is_some());
     assert_eq!(some_chain.unwrap().get_joint_angles().len(), 4);
 }

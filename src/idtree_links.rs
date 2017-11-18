@@ -26,7 +26,7 @@ use idtree::*;
 
 pub type IdLink<T> = IdNode<Link<T>>;
 
-/// Kinematic chain using `Rc<RefCell<LinkNode<T>>>`
+/// Kinematic chain using `IdNode<Link<T>>`
 pub struct IdKinematicChain<'a, T: Real> {
     pub name: String,
     pub id_list: Vec<NodeId>,

@@ -16,7 +16,7 @@
 //! # Load [URDF](http://wiki.ros.org/urdf) format and create `k::JointWithLinTree`
 //!
 //! `k::urdf` uses [urdf-rs](http://github.com/OTL/urdf-rs) to load urdf model.
-//! `k::urdf` converts `urdf_rs::Robot` to `k::LinkTree` or `k::LinkStar`
+//! `k::urdf` converts `urdf_rs::Robot` to `k::RcLinkTree` or `k::LinkStar`
 //!
 //! # Examples
 //!
@@ -141,8 +141,8 @@ fn get_root_link_name(robot: &urdf_rs::Robot) -> String {
     parent_link_name.to_string()
 }
 
-/// Create `LinkTree` from `urdf_rs::Robot`
-pub fn create_tree<T>(robot: &urdf_rs::Robot) -> LinkTree<T>
+/// Create `RcLinkTree` from `urdf_rs::Robot`
+pub fn create_tree<T>(robot: &urdf_rs::Robot) -> RcLinkTree<T>
 where
     T: Real,
 {
@@ -195,7 +195,7 @@ where
         set_parent_child(&root_node, rjn);
     }
     // create root node..
-    LinkTree::new(&robot.name, root_node)
+    RcLinkTree::new(&robot.name, root_node)
 }
 
 
@@ -211,7 +211,7 @@ pub trait FromUrdf {
     }
 }
 
-impl<T> FromUrdf for LinkTree<T>
+impl<T> FromUrdf for RcLinkTree<T>
 where
     T: Real,
 {
@@ -263,7 +263,7 @@ where
 }
 
 
-/// Create `LinkTree` from URDF file
+/// Create `RcLinkTree` from URDF file
 ///
 /// # Examples
 ///
@@ -271,7 +271,7 @@ where
 /// let tree = k::urdf::create_tree_from_file::<f32, _>("urdf/sample.urdf").unwrap();
 /// assert_eq!(tree.dof(), 12);
 /// ```
-pub fn create_tree_from_file<T, P>(path: P) -> Result<LinkTree<T>, urdf_rs::UrdfError>
+pub fn create_tree_from_file<T, P>(path: P) -> Result<RcLinkTree<T>, urdf_rs::UrdfError>
 where
     T: Real,
     P: AsRef<Path>,
