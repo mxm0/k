@@ -204,10 +204,6 @@ impl<T: Real> LinkTree<T> {
             root_link: root_link,
         }
     }
-    /// Set the transform of the root link
-    pub fn set_root_transform(&mut self, transform: Isometry3<T>) {
-        self.root_link.borrow_mut().data.transform = transform;
-    }
     /// iter for all link nodes
     pub fn iter(&self) -> Iter<RcLinkNode<T>> {
         self.expanded_robot_link_vec.iter()
