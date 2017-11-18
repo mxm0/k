@@ -229,12 +229,6 @@ impl<T: Real> RcLinkTree<T> {
     pub fn iter_for_joints_link<'a>(&'a self) -> Box<Iterator<Item = Ref<'a, Link<T>>> + 'a> {
         Box::new(self.iter_link().filter(|link| link.has_joint_angle()))
     }
-    /// Get all joint names, include fixed joint
-    pub fn get_all_joint_names(&self) -> Vec<String> {
-        self.iter_link()
-            .map(|link| link.get_joint_name().to_string())
-            .collect()
-    }
 
     /// Get the degree of freedom
     pub fn dof(&self) -> usize {
