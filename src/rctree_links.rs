@@ -320,11 +320,11 @@ where
     create_kinematic_chains_with_dof_limit(tree, usize::max_value())
 }
 
-impl<T> CreateChain<RcKinematicChain<T>, T> for LinkTree<T>
+impl<'a, T> CreateChain<'a, RcKinematicChain<T>, T> for LinkTree<T>
 where
     T: Real,
 {
-    fn chain_from_end_link_name(&self, name: &str) -> Option<RcKinematicChain<T>> {
+    fn chain_from_end_link_name(&'a mut self, name: &str) -> Option<RcKinematicChain<T>> {
         create_kinematic_chain_from_end_link_name(self, name)
     }
 }

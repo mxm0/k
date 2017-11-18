@@ -59,10 +59,10 @@ where
 }
 
 /// Create KinematicChain
-pub trait CreateChain<K, T>
+pub trait CreateChain<'a, K, T>
 where
     K: KinematicChain<T>,
     T: Real,
 {
-    fn chain_from_end_link_name(&self, name: &str) -> Option<K>;
+    fn chain_from_end_link_name(&'a mut self, name: &str) -> Option<K>;
 }
