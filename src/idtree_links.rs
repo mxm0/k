@@ -142,6 +142,9 @@ where
 pub struct IdLinkTree<T: Real> {
     pub name: String,
     pub tree: IdTree<Link<T>>,
+    /// This is used to speed up calc_link_transforms,
+    /// because iter_descendants is very slow now.
+    expanded_ids: Vec<NodeId>,
 }
 
 impl<T: Real> IdLinkTree<T> {
@@ -149,26 +152,19 @@ impl<T: Real> IdLinkTree<T> {
     ///
     /// # Arguments
     ///
-    /// * `root_link` - root node of the links
+    /// * `tree` - tree which contains all links
     pub fn new(name: &str, tree: IdTree<Link<T>>) -> Self {
+        let root_id = tree.get_root_node_id();
+        let expanded_ids = tree.iter_descendants(&root_id)
+            .map(|node| node.id.clone())
+            .collect();
         Self {
             name: name.to_string(),
             tree,
+            expanded_ids,
         }
     }
-    pub fn get_root_node_id(&self) -> NodeId {
-        for node in self.tree.iter() {
-            if node.parent.is_none() {
-                return node.id.clone();
-            }
-        }
-        assert!(false, "could not found root");
-        NodeId(0)
-    }
-    /// Set the transform of the root link
-    pub fn set_root_transform(&mut self, transform: Isometry3<T>) {
-        self.tree.get_mut(&NodeId(0)).data.transform = transform;
-    }
+
     /// iter for all link nodes
     pub fn iter(&self) -> Iter<IdLink<T>> {
         self.tree.iter()
@@ -235,26 +231,33 @@ where
     T: Real,
 {
     fn calc_link_transforms(&self) -> Vec<Isometry3<T>> {
-        self.tree
-            .iter_descendants(&NodeId(0))
-            .map(|node| {
-                let parent_transform = match node.parent {
+        // iter_descendants is very slow, so use expanded_ids
+        self.expanded_ids
+            .iter()
+            .map(|node_id| {
+                let node = self.tree.get(node_id);
+                let node_trans = node.data.calc_transform();
+                let world_trans = match node.parent {
                     Some(ref parent) => {
-                        match *self.tree.get(parent).data.world_transform_cache.borrow() {
-                            Some(trans) => trans,
-                            None => Isometry3::identity(),
-                        }
+                        self.tree
+                            .get(parent)
+                            .data
+                            .world_transform_cache
+                            .borrow()
+                            .expect("cache must exist") * node_trans
                     }
-                    None => Isometry3::identity(),
+                    None => node_trans,
                 };
-                let trans = parent_transform * node.data.calc_transform();
-                *node.data.world_transform_cache.borrow_mut() = Some(trans);
-                trans
+                *node.data.world_transform_cache.borrow_mut() = Some(world_trans);
+                world_trans
             })
             .collect()
     }
     fn get_link_names(&self) -> Vec<String> {
-        self.iter().map(|node| node.data.name.to_owned()).collect()
+        self.expanded_ids
+            .iter()
+            .map(|node_id| self.tree.get(node_id).data.name.to_owned())
+            .collect()
     }
 }
 

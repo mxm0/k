@@ -72,32 +72,6 @@ impl<'a, T> Iterator for Descendants<'a, T> {
     }
 }
 
-/*
-pub struct DescendantsMut<'a, T>
-where
-    T: 'a,
-{
-    tree: &'a mut IdTree<T>,
-    stack: Vec<NodeId>,
-}
-
-impl<'a, T> Iterator for DescendantsMut<'a, T> {
-    type Item = &'a mut IdNode<T>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let ret_id = match self.stack.pop() {
-            Some(id) => id,
-            None => {
-                return None;
-            }
-        };
-        let node: &'a mut IdNode<T> = self.tree.get_mut(&ret_id);
-        self.stack.extend(node.children.clone());
-        Some(node)
-    }
-}
-*/
-
 #[derive(Debug)]
 pub struct IdTree<T> {
     nodes: Vec<IdNode<T>>,
@@ -144,15 +118,14 @@ impl<T> IdTree<T> {
             stack: vec![id.clone()],
         }
     }
-    /*
-    /// iter from the root to end, it contains nodes[id] itsself
-    pub fn iter_descendants_mut(&mut self, id: &NodeId) -> DescendantsMut<T> {
-        DescendantsMut {
-            tree: self,
-            stack: vec![id.clone()],
+    pub fn get_root_node_id(&self) -> NodeId {
+        for node in self.iter() {
+            if node.parent.is_none() {
+                return node.id.clone();
+            }
         }
+        panic!("could not found root");
     }
-    */
 }
 
 #[test]

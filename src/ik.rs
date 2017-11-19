@@ -168,7 +168,7 @@ where
             jacobian_move_epsilon: na::convert(0.001),
             move_epsilon: na::convert(0.001),
             allowable_target_distance: na::convert(0.001),
-            num_max_try: 100,
+            num_max_try: 1000,
         }
     }
     pub fn jacobian_move_epsilon(&mut self, jacobian_epsilon: T) -> &mut Self {

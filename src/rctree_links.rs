@@ -289,7 +289,7 @@ where
                         let cache = parent_obj.data.world_transform_cache.borrow();
                         match *cache {
                             Some(trans) => trans,
-                            None => Isometry3::identity(),
+                            None => panic!("cache must exist"),
                         }
                     }
                     None => Isometry3::identity(),
