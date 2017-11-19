@@ -15,10 +15,9 @@
  */
 extern crate nalgebra as na;
 
+use std::cell::{Ref, RefCell};
 use na::{Isometry3, Real};
 use std::slice::{Iter, IterMut};
-use std::rc::Rc;
-use std::cell::{Ref, RefCell, RefMut};
 
 use errors::*;
 use joints::*;
@@ -27,7 +26,6 @@ use links::*;
 use rctree::*;
 
 pub type RcLinkNode<T> = RcNode<Link<T>>;
-pub type LinkNode<T> = Node<Link<T>>;
 
 /// Kinematic chain using `Rc<RefCell<LinkNode<T>>>`
 pub struct RcKinematicChain<T: Real> {
@@ -152,34 +150,6 @@ where
             .iter()
             .map(|ljn_ref| ljn_ref.borrow().data.joint.name.to_string())
             .collect()
-    }
-}
-
-pub struct NodeIter<'a, T: 'a> {
-    iter: Iter<'a, Rc<RefCell<Node<T>>>>,
-}
-
-impl<'a, T: 'a> Iterator for NodeIter<'a, T> {
-    type Item = Ref<'a, T>;
-
-    fn next(&mut self) -> Option<Ref<'a, T>> {
-        self.iter.next().map(|rc| {
-            Ref::map(rc.borrow(), |node| &node.data)
-        })
-    }
-}
-
-pub struct NodeIterMut<'a, T: 'a> {
-    iter: Iter<'a, Rc<RefCell<Node<T>>>>,
-}
-
-impl<'a, T: 'a> Iterator for NodeIterMut<'a, T> {
-    type Item = RefMut<'a, T>;
-
-    fn next(&mut self) -> Option<RefMut<'a, T>> {
-        self.iter.next().map(|rc| {
-            RefMut::map(rc.borrow_mut(), |node| &mut node.data)
-        })
     }
 }
 

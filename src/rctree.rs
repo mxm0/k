@@ -13,8 +13,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-use std::cell::RefCell;
 use std::rc::{Rc, Weak};
+use std::slice::Iter;
+use std::cell::{Ref, RefCell, RefMut};
 
 pub type RcNode<T> = Rc<RefCell<Node<T>>>;
 type WeakNode<T> = Weak<RefCell<Node<T>>>;
@@ -34,6 +35,35 @@ impl<T> Node<T> {
             children: Vec::new(),
             data: obj,
         }
+    }
+}
+
+
+pub struct NodeIter<'a, T: 'a> {
+    pub iter: Iter<'a, Rc<RefCell<Node<T>>>>,
+}
+
+impl<'a, T: 'a> Iterator for NodeIter<'a, T> {
+    type Item = Ref<'a, T>;
+
+    fn next(&mut self) -> Option<Ref<'a, T>> {
+        self.iter.next().map(|rc| {
+            Ref::map(rc.borrow(), |node| &node.data)
+        })
+    }
+}
+
+pub struct NodeIterMut<'a, T: 'a> {
+    pub iter: Iter<'a, Rc<RefCell<Node<T>>>>,
+}
+
+impl<'a, T: 'a> Iterator for NodeIterMut<'a, T> {
+    type Item = RefMut<'a, T>;
+
+    fn next(&mut self) -> Option<RefMut<'a, T>> {
+        self.iter.next().map(|rc| {
+            RefMut::map(rc.borrow_mut(), |node| &mut node.data)
+        })
     }
 }
 

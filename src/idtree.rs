@@ -73,6 +73,7 @@ impl<'a, T> Iterator for Descendants<'a, T> {
 }
 
 #[derive(Debug)]
+/// Tree structure which has an arena of `IdNode<T>`
 pub struct IdTree<T> {
     nodes: Vec<IdNode<T>>,
 }

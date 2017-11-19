@@ -24,7 +24,7 @@ use traits::*;
 use links::*;
 use idtree::*;
 
-pub type IdLink<T> = IdNode<Link<T>>;
+pub type IdLinkNode<T> = IdNode<Link<T>>;
 
 /// Kinematic chain using `IdNode<Link<T>>`
 pub struct IdKinematicChain<'a, T: Real> {
@@ -166,19 +166,19 @@ impl<T: Real> IdLinkTree<T> {
     }
 
     /// iter for all link nodes
-    pub fn iter(&self) -> Iter<IdLink<T>> {
+    pub fn iter(&self) -> Iter<IdLinkNode<T>> {
         self.tree.iter()
     }
     /// iter for all link nodes as mut
-    pub fn iter_mut(&mut self) -> IterMut<IdLink<T>> {
+    pub fn iter_mut(&mut self) -> IterMut<IdLinkNode<T>> {
         self.tree.iter_mut()
     }
     /// iter for the links with the joint which is not fixed
-    pub fn iter_joints<'a>(&'a self) -> Box<Iterator<Item = &IdLink<T>> + 'a> {
+    pub fn iter_joints<'a>(&'a self) -> Box<Iterator<Item = &IdLinkNode<T>> + 'a> {
         Box::new(self.iter().filter(|node| node.data.has_joint_angle()))
     }
     /// iter for the links with the joint which is not fixed
-    pub fn iter_joints_mut<'a>(&'a mut self) -> Box<Iterator<Item = &mut IdLink<T>> + 'a> {
+    pub fn iter_joints_mut<'a>(&'a mut self) -> Box<Iterator<Item = &mut IdLinkNode<T>> + 'a> {
         Box::new(self.iter_mut().filter(|node| node.data.has_joint_angle()))
     }
     /// Get the degree of freedom
