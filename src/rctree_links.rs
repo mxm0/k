@@ -190,19 +190,19 @@ impl<T: Real> RcLinkTree<T> {
         NodeIterMut { iter: self.expanded_robot_link_vec.iter() }
     }
     /// iter for the links with the joint which is not fixed
-    pub fn iter_for_joints<'a>(&'a self) -> Box<Iterator<Item = &RcLinkNode<T>> + 'a> {
+    pub fn iter_joints<'a>(&'a self) -> Box<Iterator<Item = &RcLinkNode<T>> + 'a> {
         Box::new(self.iter().filter(
             |ljn| ljn.borrow().data.has_joint_angle(),
         ))
     }
     /// iter for the links with the joint which is not fixed
-    pub fn iter_for_joints_link<'a>(&'a self) -> Box<Iterator<Item = Ref<'a, Link<T>>> + 'a> {
+    pub fn iter_joints_link<'a>(&'a self) -> Box<Iterator<Item = Ref<'a, Link<T>>> + 'a> {
         Box::new(self.iter_link().filter(|link| link.has_joint_angle()))
     }
 
     /// Get the degree of freedom
     pub fn dof(&self) -> usize {
-        self.iter_for_joints().count()
+        self.iter_joints().count()
     }
 }
 
@@ -227,19 +227,19 @@ where
         if angles_vec.len() != self.dof() {
             return Err(JointError::SizeMisMatch);
         }
-        for (lj, angle) in self.iter_for_joints().zip(angles_vec.iter()) {
+        for (lj, angle) in self.iter_joints().zip(angles_vec.iter()) {
             lj.borrow_mut().data.set_joint_angle(*angle)?;
         }
         Ok(())
     }
 
     fn get_joint_limits(&self) -> Vec<Option<Range<T>>> {
-        self.iter_for_joints_link()
+        self.iter_joints_link()
             .map(|link| link.joint.limits.clone())
             .collect()
     }
     fn get_joint_names(&self) -> Vec<String> {
-        self.iter_for_joints_link()
+        self.iter_joints_link()
             .map(|link| link.joint.name.clone())
             .collect()
     }
