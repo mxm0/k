@@ -232,15 +232,14 @@ where
         }
         Ok(())
     }
-
     fn get_joint_limits(&self) -> Vec<Option<Range<T>>> {
-        self.iter_joints_link()
-            .map(|link| link.joint.limits.clone())
+        self.iter_joints()
+            .map(|node| node.borrow().data.joint.limits.clone())
             .collect()
     }
     fn get_joint_names(&self) -> Vec<String> {
-        self.iter_joints_link()
-            .map(|link| link.joint.name.clone())
+        self.iter_joints()
+            .map(|node| node.borrow().data.joint.name.clone())
             .collect()
     }
 }
@@ -275,12 +274,12 @@ where
     }
 }
 
-impl<'a, T> CreateChain<'a, RcKinematicChain<T>, T> for RcLinkTree<T>
+impl<T> CreateChain<RcKinematicChain<T>, T> for RcLinkTree<T>
 where
     T: Real,
 {
     /// Create RcKinematicChain from `RcLinkTree` and the name of the end link
-    fn chain_from_end_link_name(&'a mut self, name: &str) -> Option<RcKinematicChain<T>> {
+    fn chain_from_end_link_name(&self, name: &str) -> Option<RcKinematicChain<T>> {
         match self.iter().find(
             |&ljn_ref| ljn_ref.borrow().data.name == name,
         ) {
@@ -401,7 +400,7 @@ fn it_works() {
     assert!(arm.get_end_link_name().clone().unwrap() == "link2");
     assert!(real_end != arm.calc_end_transform());
 
-    let mut tree = RcLinkTree::new("robo1", ljn0);
+    let tree = RcLinkTree::new("robo1", ljn0);
     assert_eq!(tree.dof(), 6);
 
     let none_chain = tree.chain_from_end_link_name("link_nono");

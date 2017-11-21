@@ -185,6 +185,27 @@ impl<T: Real> IdLinkTree<T> {
     pub fn dof(&self) -> usize {
         self.iter_joints().count()
     }
+
+    pub fn chain_from_end_link_name<'a>(
+        &'a mut self,
+        end_link_name: &str,
+    ) -> Option<IdKinematicChain<'a, T>> {
+        self.tree
+            .iter()
+            .find(|node| node.data.name == end_link_name)
+            .map(|node| node.id.clone())
+            .map(|end_node_id| {
+                let mut node_ids = self.tree
+                    .iter_ancestors(&end_node_id)
+                    .map(|node| node.id)
+                    .collect::<Vec<_>>();
+                node_ids.reverse();
+                node_ids
+            })
+            .map(move |ids| {
+                IdKinematicChain::<'a, T>::new(end_link_name, &mut self.tree, &ids)
+            })
+    }
 }
 
 
@@ -258,32 +279,6 @@ where
             .iter()
             .map(|node_id| self.tree.get(node_id).data.name.to_owned())
             .collect()
-    }
-}
-
-impl<'a, T> CreateChain<'a, IdKinematicChain<'a, T>, T> for IdLinkTree<T>
-where
-    T: Real,
-{
-    fn chain_from_end_link_name(
-        &'a mut self,
-        end_link_name: &str,
-    ) -> Option<IdKinematicChain<'a, T>> {
-        self.tree
-            .iter()
-            .find(|node| node.data.name == end_link_name)
-            .map(|node| node.id.clone())
-            .map(|end_node_id| {
-                let mut node_ids = self.tree
-                    .iter_ancestors(&end_node_id)
-                    .map(|node| node.id)
-                    .collect::<Vec<_>>();
-                node_ids.reverse();
-                node_ids
-            })
-            .map(move |ids| {
-                IdKinematicChain::<'a, T>::new(end_link_name, &mut self.tree, &ids)
-            })
     }
 }
 
