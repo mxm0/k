@@ -18,6 +18,7 @@ extern crate nalgebra as na;
 use std::cell::{Ref, RefCell};
 use na::{Isometry3, Real};
 use std::slice::{Iter, IterMut};
+use std::collections::HashMap;
 
 use errors::*;
 use joints::*;
@@ -158,6 +159,7 @@ pub struct RcLinkTree<T: Real> {
     pub name: String,
     pub root_link: RcLinkNode<T>,
     expanded_robot_link_vec: Vec<RcLinkNode<T>>,
+    chains: HashMap<String, RcKinematicChain<T>>,
 }
 
 impl<T: Real> RcLinkTree<T> {
@@ -171,6 +173,7 @@ impl<T: Real> RcLinkTree<T> {
             name: name.to_string(),
             expanded_robot_link_vec: map_descendants(&root_link, &|ln| ln.clone()),
             root_link: root_link,
+            chains: HashMap::new(),
         }
     }
     /// iter for all link nodes
@@ -274,18 +277,22 @@ where
     }
 }
 
-impl<T> CreateChain<RcKinematicChain<T>, T> for RcLinkTree<T>
+impl<'a, T> ChainContainer<'a, RcKinematicChain<T>, T> for RcLinkTree<T>
 where
     T: Real,
 {
     /// Create RcKinematicChain from `RcLinkTree` and the name of the end link
-    fn chain_from_end_link_name(&self, name: &str) -> Option<RcKinematicChain<T>> {
-        match self.iter().find(
-            |&ljn_ref| ljn_ref.borrow().data.name == name,
-        ) {
-            Some(ljn) => Some(RcKinematicChain::new(name, ljn)),
-            None => None,
+    fn get_chain(&'a mut self, end_link_name: &str) -> Option<&mut RcKinematicChain<T>> {
+        if self.chains.contains_key(end_link_name) {
+            return self.chains.get_mut(end_link_name);
         }
+        let chain_opt = self.iter()
+            .find(|&ljn_ref| ljn_ref.borrow().data.name == end_link_name)
+            .map(|ljn| RcKinematicChain::new(end_link_name, ljn));
+        chain_opt.and_then(move |chain| {
+            self.chains.insert(end_link_name.to_owned(), chain);
+            self.chains.get_mut(end_link_name)
+        })
     }
 }
 
@@ -400,12 +407,13 @@ fn it_works() {
     assert!(arm.get_end_link_name().clone().unwrap() == "link2");
     assert!(real_end != arm.calc_end_transform());
 
-    let tree = RcLinkTree::new("robo1", ljn0);
+    let mut tree = RcLinkTree::new("robo1", ljn0);
     assert_eq!(tree.dof(), 6);
-
-    let none_chain = tree.chain_from_end_link_name("link_nono");
-    assert!(none_chain.is_none());
-    let some_chain = tree.chain_from_end_link_name("link3");
+    {
+        let none_chain = tree.get_chain("link_nono");
+        assert!(none_chain.is_none());
+    }
+    let some_chain = tree.get_chain("link3");
     assert!(some_chain.is_some());
     assert_eq!(some_chain.unwrap().get_joint_angles().len(), 4);
 }

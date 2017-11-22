@@ -180,7 +180,7 @@ where
     }
 }
 
-impl<T> FromUrdf for IdLinkTree<T>
+impl<'a, T> FromUrdf for IdLinkTree<'a, T>
 where
     T: Real,
 {

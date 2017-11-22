@@ -17,6 +17,7 @@ extern crate nalgebra as na;
 
 use na::{Isometry3, Real};
 use std::slice::{Iter, IterMut};
+use std::collections::HashMap;
 
 use errors::*;
 use joints::*;
@@ -139,15 +140,16 @@ where
 }
 
 /// Kinematic Tree using `IdTree<Link<T>>`
-pub struct IdLinkTree<T: Real> {
+pub struct IdLinkTree<'a, T: Real> {
     pub name: String,
     pub tree: IdTree<Link<T>>,
     /// This is used to speed up calc_link_transforms,
     /// because iter_descendants is very slow now.
     expanded_ids: Vec<NodeId>,
+    chains: HashMap<String, IdKinematicChain<'a, T>>,
 }
 
-impl<T: Real> IdLinkTree<T> {
+impl<'a, T: Real> IdLinkTree<'a, T> {
     /// Create LinkTree from root link
     ///
     /// # Arguments
@@ -162,6 +164,7 @@ impl<T: Real> IdLinkTree<T> {
             name: name.to_string(),
             tree,
             expanded_ids,
+            chains: HashMap::new(),
         }
     }
 
@@ -174,22 +177,27 @@ impl<T: Real> IdLinkTree<T> {
         self.tree.iter_mut()
     }
     /// iter for the links with the joint which is not fixed
-    pub fn iter_joints<'a>(&'a self) -> Box<Iterator<Item = &IdLinkNode<T>> + 'a> {
+    pub fn iter_joints<'b>(&'b self) -> Box<Iterator<Item = &IdLinkNode<T>> + 'b> {
         Box::new(self.iter().filter(|node| node.data.has_joint_angle()))
     }
     /// iter for the links with the joint which is not fixed
-    pub fn iter_joints_mut<'a>(&'a mut self) -> Box<Iterator<Item = &mut IdLinkNode<T>> + 'a> {
+    pub fn iter_joints_mut<'b>(&'b mut self) -> Box<Iterator<Item = &mut IdLinkNode<T>> + 'b> {
         Box::new(self.iter_mut().filter(|node| node.data.has_joint_angle()))
     }
     /// Get the degree of freedom
     pub fn dof(&self) -> usize {
         self.iter_joints().count()
     }
+}
 
-    pub fn chain_from_end_link_name<'a>(
-        &'a mut self,
-        end_link_name: &str,
-    ) -> Option<IdKinematicChain<'a, T>> {
+impl<'a, T> ChainContainer<'a, IdKinematicChain<'a, T>, T> for IdLinkTree<'a, T>
+where
+    T: Real,
+{
+    fn get_chain(&'a mut self, end_link_name: &str) -> Option<&mut IdKinematicChain<'a, T>> {
+        if self.chains.contains_key(end_link_name) {
+            return self.chains.get_mut(end_link_name);
+        }
         self.tree
             .iter()
             .find(|node| node.data.name == end_link_name)
@@ -202,14 +210,16 @@ impl<T: Real> IdLinkTree<T> {
                 node_ids.reverse();
                 node_ids
             })
-            .map(move |ids| {
-                IdKinematicChain::<'a, T>::new(end_link_name, &mut self.tree, &ids)
+            .and_then(move |ids| {
+                let chain = IdKinematicChain::<'a, T>::new(end_link_name, &mut self.tree, &ids);
+                self.chains.insert(end_link_name.to_owned(), chain);
+                self.chains.get_mut(end_link_name)
             })
     }
 }
 
 
-impl<T> JointContainer<T> for IdLinkTree<T>
+impl<'a, T> JointContainer<T> for IdLinkTree<'a, T>
 where
     T: Real,
 {
@@ -247,7 +257,7 @@ where
     }
 }
 
-impl<T> LinkContainer<T> for IdLinkTree<T>
+impl<'a, T> LinkContainer<T> for IdLinkTree<'a, T>
 where
     T: Real,
 {

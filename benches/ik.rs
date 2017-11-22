@@ -8,10 +8,9 @@ extern crate nalgebra as na;
 use k::KinematicChain;
 use k::urdf::FromUrdf;
 use k::InverseKinematicsSolver;
-use k::CreateChain;
+use k::ChainContainer;
 
-
-fn bench_tree_ik<K>(mut arm: K, b: &mut test::Bencher)
+fn bench_tree_ik<K>(arm: &mut K, b: &mut test::Bencher)
 where
     K: KinematicChain<f64>,
 {
@@ -23,7 +22,7 @@ where
 
     let solver = k::JacobianIKSolver::new(0.001, 0.001, 0.001, 1000);
     b.iter(|| {
-        solver.solve(&mut arm, &target).unwrap();
+        solver.solve(arm, &target).unwrap();
         let _trans = arm.calc_end_transform();
         arm.set_joint_angles(&angles).unwrap();
     });
@@ -33,13 +32,13 @@ where
 #[bench]
 fn bench_idtree_ik(b: &mut test::Bencher) {
     let mut robot = k::IdLinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
-    let arm = robot.chain_from_end_link_name("l_wrist2").unwrap();
+    let arm = robot.get_chain("l_wrist2").unwrap();
     bench_tree_ik(arm, b);
 }
 
 #[bench]
 fn bench_rctree_ik(b: &mut test::Bencher) {
     let mut robot = k::RcLinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
-    let arm = robot.chain_from_end_link_name("l_wrist2").unwrap();
+    let arm = robot.get_chain("l_wrist2").unwrap();
     bench_tree_ik(arm, b);
 }

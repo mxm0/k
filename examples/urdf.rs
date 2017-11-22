@@ -18,12 +18,12 @@ extern crate k;
 use k::InverseKinematicsSolver;
 use k::JointContainer;
 use k::KinematicChain;
-use k::CreateChain;
+use k::ChainContainer;
 use k::urdf::FromUrdf;
 
 fn main() {
-    let robot = k::RcLinkTree::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
-    let mut arm = robot.chain_from_end_link_name("l_wrist2").unwrap();
+    let mut robot = k::RcLinkTree::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
+    let arm = robot.get_chain("l_wrist2").unwrap();
     // set joint angles
     let angles = vec![0.8, 0.2, 0.0, -1.5, 0.0, -0.3];
     arm.set_joint_angles(&angles).unwrap();
@@ -35,7 +35,7 @@ fn main() {
     target.translation.vector[2] += 0.2;
     let solver = k::JacobianIKSolverBuilder::new().finalize();
     // solve and move the manipulator angles
-    solver.solve(&mut arm, &target).unwrap_or_else(|err| {
+    solver.solve(arm, &target).unwrap_or_else(|err| {
         println!("Err: {}", err);
         0.0f32
     });
