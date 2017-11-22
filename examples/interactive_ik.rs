@@ -26,7 +26,7 @@ use kiss3d::window::Window;
 use na::{Isometry3, Point3, Translation3, UnitQuaternion, Vector3};
 use k::*;
 
-fn create_joint_with_link_array() -> Vec<Link<f32>> {
+fn create_joint_with_link_array(name: &str) -> RcLinkChain<f32> {
     let l0 = LinkBuilder::new()
         .name("shoulder_link1")
         .joint(
@@ -89,8 +89,19 @@ fn create_joint_with_link_array() -> Vec<Link<f32>> {
         )
         .translation(Translation3::new(0.0, 0.0, -0.10))
         .finalize();
-
-    vec![l0, l1, l2, l3, l4, l5, l6]
+    let n0 = k::new_ref_node(l0);
+    let n1 = k::new_ref_node(l1);
+    let n2 = k::new_ref_node(l2);
+    let n3 = k::new_ref_node(l3);
+    let n4 = k::new_ref_node(l4);
+    let n5 = k::new_ref_node(l5);
+    let n6 = k::new_ref_node(l6);
+    k::set_parent_child(&n0, &n1);
+    k::set_parent_child(&n1, &n2);
+    k::set_parent_child(&n2, &n3);
+    k::set_parent_child(&n4, &n5);
+    k::set_parent_child(&n5, &n6);
+    k::RcLinkChain::new(name, &n0)
 }
 
 fn create_ground(window: &mut Window) -> Vec<SceneNode> {
@@ -138,13 +149,8 @@ fn create_cubes(window: &mut Window) -> Vec<SceneNode> {
 }
 
 fn main() {
-    let links = create_joint_with_link_array();
-    let mut tree = IdTree::new();
-    let id_list = links
-        .into_iter()
-        .map(|link| tree.create_node(link))
-        .collect::<Vec<_>>();
-    let mut arm = IdKinematicChain::new("arm", &mut tree, &id_list);
+    let mut arm = create_joint_with_link_array("arm");
+
     let mut window = Window::new("k ui");
     window.set_light(Light::StickToCamera);
     let mut cubes = create_cubes(&mut window);

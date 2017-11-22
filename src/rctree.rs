@@ -74,7 +74,7 @@ pub fn set_parent_child<T>(parent: &RcNode<T>, child: &RcNode<T>) {
 }
 
 /// Wrap data: T with RC<RefCell<Node<T>>
-pub fn create_ref_node<T>(data: T) -> RcNode<T> {
+pub fn new_ref_node<T>(data: T) -> RcNode<T> {
     Rc::new(RefCell::new(Node::new(data)))
 }
 
@@ -121,14 +121,14 @@ where
 
 #[test]
 fn test() {
-    let n0 = create_ref_node(0);
-    let n1 = create_ref_node(1);
-    let n2 = create_ref_node(2);
-    let n3 = create_ref_node(3);
-    let n4 = create_ref_node(4);
-    let n5 = create_ref_node(5);
-    let n6 = create_ref_node(6);
-    let n7 = create_ref_node(7);
+    let n0 = new_ref_node(0);
+    let n1 = new_ref_node(1);
+    let n2 = new_ref_node(2);
+    let n3 = new_ref_node(3);
+    let n4 = new_ref_node(4);
+    let n5 = new_ref_node(5);
+    let n6 = new_ref_node(6);
+    let n7 = new_ref_node(7);
     set_parent_child(&n0, &n1);
     set_parent_child(&n1, &n2);
     set_parent_child(&n2, &n3);

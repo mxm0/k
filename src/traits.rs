@@ -59,10 +59,10 @@ where
 }
 
 /// Create KinematicChain
-pub trait ChainContainer<'a, K, T>
+pub trait ChainContainer<K, T>
 where
     K: KinematicChain<T>,
     T: Real,
 {
-    fn get_chain(&'a mut self, end_link_name: &str) -> Option<&mut K>;
+    fn get_chain(&self, end_link_name: &str) -> Option<K>;
 }

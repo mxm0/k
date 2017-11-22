@@ -30,15 +30,8 @@ where
 
 
 #[bench]
-fn bench_idtree_ik(b: &mut test::Bencher) {
-    let mut robot = k::IdLinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
-    let arm = robot.get_chain("l_wrist2").unwrap();
-    bench_tree_ik(arm, b);
-}
-
-#[bench]
 fn bench_rctree_ik(b: &mut test::Bencher) {
-    let mut robot = k::RcLinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
-    let arm = robot.get_chain("l_wrist2").unwrap();
-    bench_tree_ik(arm, b);
+    let robot = k::RcLinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
+    let mut arm = robot.get_chain("l_wrist2").unwrap();
+    bench_tree_ik(&mut arm, b);
 }

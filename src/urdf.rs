@@ -23,8 +23,6 @@ use std::path::Path;
 use na::Real;
 
 use links::*;
-use idtree_links::*;
-use idtree::*;
 use rctree::*;
 use rctree_links::*;
 use joints::*;
@@ -132,14 +130,14 @@ where
         let mut ref_nodes = Vec::new();
         let mut child_ref_map = HashMap::new();
         let mut parent_ref_map = HashMap::<&String, Vec<RcLinkNode<T>>>::new();
-        let root_node = create_ref_node(
+        let root_node = new_ref_node(
             LinkBuilder::<T>::new()
                 .joint("root", JointType::Fixed, None)
                 .name(&root_name)
                 .finalize(),
         );
         for j in &robot.joints {
-            let node = create_ref_node(Link::from_urdf_joint(j));
+            let node = new_ref_node(Link::from_urdf_joint(j));
             child_ref_map.insert(&j.child.link, node.clone());
             if parent_ref_map.get(&j.parent.link).is_some() {
                 parent_ref_map.get_mut(&j.parent.link).unwrap().push(
@@ -180,64 +178,6 @@ where
     }
 }
 
-impl<'a, T> FromUrdf for IdLinkTree<'a, T>
-where
-    T: Real,
-{
-    /// Create `IdLinkTree` from `urdf_rs::Robot`
-    fn from_urdf_robot(robot: &urdf_rs::Robot) -> Self {
-        let root_name = get_root_link_name(robot);
-        let mut nodes = Vec::new();
-        let mut child_ref_map = HashMap::new();
-        let mut parent_ref_map = HashMap::<_, Vec<_>>::new();
-        let mut tree = IdTree::new();
-        let root_node = tree.create_node(
-            LinkBuilder::<T>::new()
-                .joint("root", JointType::Fixed, None)
-                .name(&root_name)
-                .finalize(),
-        );
-        for j in &robot.joints {
-            let node = tree.create_node(Link::from_urdf_joint(j));
-            child_ref_map.insert(&j.child.link, node.clone());
-            if parent_ref_map.get(&j.parent.link).is_some() {
-                parent_ref_map.get_mut(&j.parent.link).unwrap().push(
-                    node.clone(),
-                );
-            } else {
-                parent_ref_map.insert(&j.parent.link, vec![node.clone()]);
-            }
-            nodes.push(node);
-        }
-        for l in &robot.links {
-            info!("link={}", l.name);
-            if let Some(parent_node) = child_ref_map.get(&l.name) {
-                if let Some(child_nodes) = parent_ref_map.get(&l.name) {
-                    for child_node in child_nodes.iter() {
-                        info!(
-                            "set paremt = {}, child = {}",
-                            tree.get(parent_node).data.get_joint_name(),
-                            tree.get(child_node).data.get_joint_name()
-                        );
-                        tree.set_parent_child(parent_node, child_node);
-                    }
-                }
-            }
-        }
-        let root_node_ids = nodes
-            .into_iter()
-            .filter_map(|ref_node| match tree.get(&ref_node).parent {
-                None => Some(ref_node.clone()),
-                Some(_) => None,
-            })
-            .collect::<Vec<_>>();
-        for id in root_node_ids {
-            tree.set_parent_child(&root_node, &id);
-        }
-        IdLinkTree::new(&robot.name, tree)
-    }
-}
-
 
 #[test]
 fn test_tree() {
@@ -258,20 +198,6 @@ fn test_tree_from_file() {
         .collect::<Vec<_>>();
     assert_eq!(names.len(), 13);
     println!("{}", names[0]);
-    assert_eq!(names[0], "root");
-    assert_eq!(names[1], "l_shoulder_yaw");
-}
-
-#[test]
-fn test_idtree_from_file() {
-    let tree = IdLinkTree::<f32>::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
-    assert_eq!(tree.dof(), 12);
-    let names = tree.iter()
-        .map(|node| node.data.get_joint_name())
-        .collect::<Vec<_>>();
-    assert_eq!(names.len(), 13);
-    println!("{}", names[0]);
-    println!("{}", names[1]);
     assert_eq!(names[0], "root");
     assert_eq!(names[1], "l_shoulder_yaw");
 }

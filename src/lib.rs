@@ -26,8 +26,6 @@ extern crate log;
 extern crate nalgebra as na;
 
 mod errors;
-mod idtree_links;
-mod idtree;
 mod ik;
 mod joints;
 mod links;
@@ -39,12 +37,12 @@ pub mod math;
 pub mod urdf;
 
 pub use self::errors::*;
-pub use self::idtree::IdTree;
-pub use self::idtree_links::*;
 pub use self::ik::*;
+pub use self::rctree::*;
 pub use self::joints::*;
 pub use self::links::*;
 pub use self::rctree_links::*;
 pub use self::traits::*;
 
 pub type LinkTree<T> = RcLinkTree<T>;
+pub type LinkChain<T> = RcLinkChain<T>;
