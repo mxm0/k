@@ -120,24 +120,24 @@ pub trait FromUrdf {
     }
 }
 
-impl<T> FromUrdf for RcLinkTree<T>
+impl<T> FromUrdf for LinkTree<T>
 where
     T: Real,
 {
-    /// Create `RcLinkTree` from `urdf_rs::Robot`
+    /// Create `LinkTree` from `urdf_rs::Robot`
     fn from_urdf_robot(robot: &urdf_rs::Robot) -> Self {
         let root_name = get_root_link_name(robot);
         let mut ref_nodes = Vec::new();
         let mut child_ref_map = HashMap::new();
-        let mut parent_ref_map = HashMap::<&String, Vec<RcLinkNode<T>>>::new();
-        let root_node = new_ref_node(
+        let mut parent_ref_map = HashMap::<&String, Vec<LinkNode<T>>>::new();
+        let root_node = Node::new(
             LinkBuilder::<T>::new()
                 .joint("root", JointType::Fixed, None)
                 .name(&root_name)
                 .finalize(),
         );
         for j in &robot.joints {
-            let node = new_ref_node(Link::from_urdf_joint(j));
+            let node = Node::new(Link::from_urdf_joint(j));
             child_ref_map.insert(&j.child.link, node.clone());
             if parent_ref_map.get(&j.parent.link).is_some() {
                 parent_ref_map.get_mut(&j.parent.link).unwrap().push(
@@ -158,7 +158,7 @@ where
                             parent_node.borrow().data.get_joint_name(),
                             child_node.borrow().data.get_joint_name()
                         );
-                        set_parent_child(parent_node, child_node);
+                        child_node.set_parent(parent_node);
                     }
                 }
             }
@@ -171,10 +171,10 @@ where
             },
         );
         for rjn in root_joint_nodes {
-            set_parent_child(&root_node, rjn);
+            rjn.set_parent(&root_node);
         }
         // create root node..
-        RcLinkTree::new(&robot.name, root_node)
+        LinkTree::new(&robot.name, root_node)
     }
 }
 
@@ -185,13 +185,13 @@ fn test_tree() {
     assert_eq!(robo.name, "robo");
     assert_eq!(robo.links.len(), 1 + 6 + 6);
 
-    let tree = RcLinkTree::<f32>::from_urdf_robot(&robo);
+    let tree = LinkTree::<f32>::from_urdf_robot(&robo);
     assert_eq!(tree.iter_link().map(|_| {}).count(), 13);
 }
 
 #[test]
 fn test_tree_from_file() {
-    let tree = RcLinkTree::<f32>::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
+    let tree = LinkTree::<f32>::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
     assert_eq!(tree.dof(), 12);
     let names = tree.iter_link()
         .map(|link| link.get_joint_name().to_string())
@@ -199,5 +199,5 @@ fn test_tree_from_file() {
     assert_eq!(names.len(), 13);
     println!("{}", names[0]);
     assert_eq!(names[0], "root");
-    assert_eq!(names[1], "l_shoulder_yaw");
+    assert_eq!(names[1], "r_shoulder_yaw");
 }

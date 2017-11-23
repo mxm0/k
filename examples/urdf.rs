@@ -22,7 +22,7 @@ use k::ChainContainer;
 use k::urdf::FromUrdf;
 
 fn main() {
-    let robot = k::RcLinkTree::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
+    let robot = k::LinkTree::from_urdf_file::<f32, _>("urdf/sample.urdf").unwrap();
     let mut arm = robot.get_chain("l_wrist2").unwrap();
     // set joint angles
     let angles = vec![0.8, 0.2, 0.0, -1.5, 0.0, -0.3];

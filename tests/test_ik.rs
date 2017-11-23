@@ -63,19 +63,18 @@ mod tests {
             )
             .translation(Translation3::new(0.0, 0.0, -0.15))
             .finalize();
-        let n0 = k::new_ref_node(l0);
-        let n1 = k::new_ref_node(l1);
-        let n2 = k::new_ref_node(l2);
-        let n3 = k::new_ref_node(l3);
-        let n4 = k::new_ref_node(l4);
-        let n5 = k::new_ref_node(l5);
-        k::set_parent_child(&n0, &n1);
-        k::set_parent_child(&n1, &n2);
-        k::set_parent_child(&n2, &n3);
-        k::set_parent_child(&n3, &n4);
-        k::set_parent_child(&n4, &n5);
-
-        k::RcLinkChain::new("arm6", &n5)
+        let n0 = k::Node::new(l0);
+        let n1 = k::Node::new(l1);
+        let n2 = k::Node::new(l2);
+        let n3 = k::Node::new(l3);
+        let n4 = k::Node::new(l4);
+        let n5 = k::Node::new(l5);
+        n1.set_parent(&n0);
+        n2.set_parent(&n1);
+        n3.set_parent(&n2);
+        n4.set_parent(&n3);
+        n5.set_parent(&n4);
+        k::LinkChain::new("arm6", &n5)
     }
 
 
@@ -143,20 +142,20 @@ mod tests {
             .translation(Translation3::new(0.0, 0.0, -0.10))
             .finalize();
 
-        let n0 = k::new_ref_node(l0);
-        let n1 = k::new_ref_node(l1);
-        let n2 = k::new_ref_node(l2);
-        let n3 = k::new_ref_node(l3);
-        let n4 = k::new_ref_node(l4);
-        let n5 = k::new_ref_node(l5);
-        let n6 = k::new_ref_node(l6);
-        k::set_parent_child(&n0, &n1);
-        k::set_parent_child(&n1, &n2);
-        k::set_parent_child(&n2, &n3);
-        k::set_parent_child(&n3, &n4);
-        k::set_parent_child(&n4, &n5);
-        k::set_parent_child(&n5, &n6);
-        k::RcLinkChain::new("arm", &n6)
+        let n0 = k::Node::new(l0);
+        let n1 = k::Node::new(l1);
+        let n2 = k::Node::new(l2);
+        let n3 = k::Node::new(l3);
+        let n4 = k::Node::new(l4);
+        let n5 = k::Node::new(l5);
+        let n6 = k::Node::new(l6);
+        n1.set_parent(&n0);
+        n2.set_parent(&n1);
+        n3.set_parent(&n2);
+        n4.set_parent(&n3);
+        n5.set_parent(&n4);
+        n6.set_parent(&n5);
+        k::LinkChain::new("arm", &n6)
     }
 
     #[test]

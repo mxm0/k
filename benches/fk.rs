@@ -29,7 +29,7 @@ where
 
 #[bench]
 fn bench_rctree(b: &mut test::Bencher) {
-    let mut robot = k::RcLinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
+    let mut robot = k::LinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
     let limits = robot.get_joint_limits();
     let angles = generate_random_joint_angles_from_limits(&limits);
     b.iter(|| {
@@ -41,7 +41,7 @@ fn bench_rctree(b: &mut test::Bencher) {
 
 #[bench]
 fn bench_rctree_set_joints(b: &mut test::Bencher) {
-    let mut robot = k::RcLinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
+    let mut robot = k::LinkTree::<f64>::from_urdf_file::<f64, _>("urdf/sample.urdf").unwrap();
     let limits = robot.get_joint_limits();
     let angles = generate_random_joint_angles_from_limits(&limits);
     b.iter(|| { robot.set_joint_angles(&angles).unwrap(); });
