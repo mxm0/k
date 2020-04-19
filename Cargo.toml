@@ -12,7 +12,7 @@ readme = "README.md"
 
 [dependencies]
 nalgebra = "0.18"
-urdf-rs = "0.4.2"
+urdf-rs = { git = "https://github.com/mxm0/urdf-rs", branch = "serialize"}
 log = "0.3"
 failure = "0.1"
 
